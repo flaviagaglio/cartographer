@@ -1,5 +1,8 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  base: '/cartographer/',
+  base: './', // <--- Usa il percorso relativo, risolve il 404 al 100%
+  build: {
+    outDir: 'dist',
+  }
 })
