@@ -5,7 +5,7 @@
 
 🌐 **[PROVA LA DEMO LIVE](https://flaviagaglio.github.io/cartographer/)**
 
-![Cartographer Interface Preview](./src/assets/hero.png)
+![Cartographer Interface Preview](./src/assets/pero.png)
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-8.1-646CFF?style=flat-square&logo=vite)](https://vitejs.dev/)
