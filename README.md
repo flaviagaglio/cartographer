@@ -10,162 +10,136 @@
 
 ---
 
-## 👁️ Anteprima dell'Interfaccia
-
-Il progetto adotta il design system hardware **"Cream / Field"** firmato **Teenage Engineering**: controlli industriali compatti, display LCD retroilluminato, tipografia monospaziata e palette cromatiche opache con dettagli *Orange*.
-
-+-------------------------------------------------------------------------------+
-| [OP-MIR-1]  CARTOGRAPHER // ACOUSTIC SPACE ENGINE            [GUIDA] [AUTHOR] |
-+-------------------------------------------------------------------------------+
-| LCD DISPLAY:  ACTIVE NODE: SUB KICK 808 | CENTROID: 85 Hz | STATUS: READY     |
-+-------------------------------------------------------+-----------------------+
-| SPATIAL FIELD // ACOUSTIC MAP                         | INSPECTOR             |
-|                                                       |  - TRACK: SUB KICK    |
-|   ● (Bass Zone)                                       |  - TYPE: KICK         |
-|             \                                         |  - CENTROID: 85 Hz    |
-|              \                                        |  - ENERGY: 0.842      |
-|               ●---● (Percussions)                     |                       |
-|                   |                                   | [ PLAY ] [ DELETE ]   |
-|                   ● (Synth/Pads)                      | --------------------- |
-|                                                       | GESTIONE DATASET      |
-|                                                       | [ CARICA WAV / MP3 ]  |
-|                                                       | [ RICALCOLA UMAP ]    |
-+-------------------------------------------------------+-----------------------+
-| OP-MIR-1 FIELD EDITION // REVISION 4.5                                        |
-+-------------------------------------------------------------------------------+
-
----
-
 ## ⚡ Cos'è Cartographer?
 
-**Cartographer** è un'applicazione web interattiva di **Music Information Retrieval (MIR)**. Analizza le caratteristiche timbriche, spettrali ed energetiche dei file audio (presi da una libreria di sintesi interna o caricati dall'utente) e li proietta su uno spazio bidimensionale.
+**Cartographer** è un'applicazione web interattiva di **Music Information Retrieval (MIR)**. Analizza le caratteristiche timbriche, spettrali ed energetiche dei file audio e le proietta su uno spazio bidimensionale.
 
 I campioni audio acusticamente simili (come *kick*, *snare*, *pad* o *drone*) si aggregano automaticamente vicini tra loro, creando una vera e propria **mappa di navigazione sonora**.
+
+Il progetto adotta il design system hardware **"Cream / Field"** firmato **Teenage Engineering**: controlli industriali compatti, display LCD retroilluminato e palette cromatica minimale.
 
 ---
 
 ## 🚀 Caratteristiche Principali
 
 * **🔬 Estrazione Feature DSP (Digital Signal Processing)**:
-  * **Spectral Centroid** (frequenza media/brillantezza del suono).
-  * **RMS / Energy** (energia e ampiezza del segnale).
-  * **MFCC** (Mel-Frequency Cepstral Coefficients, 13 coefficienti per l'impronta timbrica).
+  * **Spectral Centroid**: Frequenza media e brillantezza percepita.
+  * **RMS / Energy**: Energia e ampiezza del segnale.
+  * **MFCC**: 13 coefficienti Mel-Frequency Cepstral per l'impronta timbrica.
 * **🗺️ Riduzione Topologica UMAP**:
-  * Riduzione vettoriale ad alta dimensione (15 dimensioni) a uno spazio canvas 2D (X, Y).
-  * Normalizzazione **Z-Score** pesata per evidenziare le differenze spettrali.
-  * Loop di **Repulsione/Relaxing** per evitare la sovrapposizione visiva dei nodi.
+  * Proiezione ad alta dimensione (15D -> 2D) su Canvas HTML5.
+  * Normalizzazione **Z-Score** pesata per bilanciare le metriche.
+  * Algoritmo di **Repulsione/Relaxing** per evitare sovrapposizioni visive.
 * **🎹 Synthesizer Audio Engine Integrato**:
-  * Inizializzazione istantanea con un dataset demo di **24 preset sintetizzati in Web Audio API** (Bass, Kick, Acid, Pad, Glitch, Reverse FX, ecc.).
-* **📂 Drag & Drop e Importazione Personale**:
-  * Possibilità di trascinare o caricare i propri file `.wav` o `.mp3` per mapparli in tempo reale.
+  * Inizializzazione con 24 preset sintetizzati direttamente tramite **Web Audio API**.
+* **📂 Importazione Personale**:
+  * Supporto Drag & Drop per file `.wav` e `.mp3`.
 * **🌐 Grafo di Prossimità (2-KNN)**:
-  * Connessione visiva automatica tra i nodi audio più vicini nello spazio acustico.
+  * Connessione visiva automatica tra i nodi audio acusticamente più vicini.
 
 ---
 
-## 📐 Come Funziona: Architettura MIR e Formule Matematiche
+## 📐 Architettura MIR e Fondamenti Matematici
 
-Il motore di **Cartographer** trasforma un segnale audio temporale in un punto nello spazio cartesiano attraverso una pipeline a 4 fasi:
+Il motore di Cartographer trasforma un segnale audio temporale in coordinate cartesiane attraverso una pipeline a 4 fasi:
 
-Segnale Audio PCM ➔ Estrazione Feature DSP ➔ Normalizzazione Vector ➔ Proiezione UMAP / Physics
+Audio PCM ➔ Estrazione DSP ➔ Normalizzazione Z-Score ➔ Proiezione UMAP / Fisica
 
 ### 1. Estrazione Spettrale (DSP)
 
-Ogni file audio viene diviso in frame e analizzato tramite Trasformata di Fourier Veloce (**FFT**). Per ciascun frame vengono calcolate tre metriche chiave:
+Ogni segnale viene diviso in frame e analizzato tramite **Fast Fourier Transform (FFT)**:
 
-#### A. Spectral Centroid (Baricentro Spettrale)
-Rappresenta il "centro di gravità" delle frequenze del suono ed è direttamente correlato con la brillantezza percepita dal timbro.
+#### A. Spectral Centroid
+Rappresenta il baricentro delle frequenze ed è legato alla brillantezza timbrica:
 
-* Formula: **Centroid = Σ ( f(k) * |X(k)| ) / Σ |X(k)|**
-* **f(k)** è la frequenza centrale del bin k.
-* **|X(k)|** è la magnitudo dello spettro al bin k.
+* Formula: C = Σ ( f(k) * |X(k)| ) / Σ |X(k)|
+* Dove f(k) è la frequenza del bin k e |X(k)| è la sua magnitudo.
 
-#### B. RMS / Energy (Valore Efficace)
-Misura l'energia complessiva del segnale audio nel tempo:
+#### B. RMS (Root Mean Square)
+Misura l'energia complessiva del segnale:
 
-* Formula: **RMS = sqrt( (1 / N) * Σ |x(n)|^2 )**
-* **x(n)** rappresenta l'ampiezza del campione n.
+* Formula: RMS = sqrt( (1 / N) * Σ |x(n)|^2 )
 
 #### C. MFCC (Mel-Frequency Cepstral Coefficients)
-I 13 coefficienti MFCC modellano l'inviluppo spettrale basandosi sulla scala Mel, che simula la percezione logaritmica dell'orecchio umano. Vengono calcolati applicando la Trasformata Discreta del Coseno (**DCT**) sui logaritmi delle energie dei filtri Mel:
+Rappresentano la forma dell'inviluppo spettrale adattato alla percezione umana (Scala Mel) tramite Discrete Cosine Transform (DCT):
 
-* Formula: **c_m = Σ log(S_k) * cos( (π * m / M) * (k - 0.5) )**
-
----
-
-### 2. Vettore delle Caratteristiche & Normalizzazione Z-Score
-
-Per ogni campione audio si costruisce un **vettore caratteristico a 15 dimensioni**:
-`v = [Centroid, RMS, MFCC_1, MFCC_2, ..., MFCC_13]`
-
-Poiché le metriche hanno unità di misura differenti (es. Centroid espresso in Hz nell'ordine delle migliaia, RMS normalizzato fra 0 e 1), il sistema applica una **Standardizzazione Z-Score** su ogni dimensione j del dataset:
-
-* Formula: **z_(i,j) = (x_(i,j) - μ_j) / σ_j**
-* **μ_j** è la media della feature j su tutti i suoni caricati.
-* **σ_j** è la deviazione standard della feature j.
-
-La normalizzazione garantisce che il baricentro spettrale non domini rispetto all'energia o all'impronta timbrica durante la misurazione della distanza.
+* Formula: c_m = Σ log(S_k) * cos( (π * m / M) * (k - 0.5) )
 
 ---
 
-### 3. Misurazione della Similarità (Distanza Euclidea)
+### 2. Standardizzazione Z-Score
 
-La similarità visiva e acustica nello spazio 15-dimensionale tra due campioni A e B si basa sulla **Distanza Euclidea Pesata**:
+Per ogni campione viene creato un vettore a 15 dimensioni:
 
-* Formula: **d(A, B) = sqrt( Σ w_j * (z_(A,j) - z_(B,j))^2 )**
-* **w_j** è un fattore di peso che bilancia l'importanza di ciascuna proprietà.
+v = [Centroid, RMS, MFCC_1, ..., MFCC_13]
+
+Per evitare che valori elevati (es. Centroid in Hz) dominino su valori piccoli (es. RMS), si applica la normalizzazione Z-Score:
+
+* Formula: z_(i,j) = (x_(i,j) - μ_j) / σ_j
+* Dove μ_j è la media e σ_j è la deviazione standard della feature j.
 
 ---
 
-### 4. Proiezione Topologica (UMAP & Relaxing Loop)
+### 3. Similarità e Distanza
 
-1. **UMAP (Uniform Manifold Approximation and Projection)**: Riduce lo spazio 15D ad un piano 2D (X, Y), conservando sia la struttura locale (suoni simili raggruppati) sia la struttura globale (relazione tra intere famiglie di strumenti).
-2. **Post-Processing Fisico (Algoritmo Anti-Sovrapposizione)**: Per evitare che nodi quasi identici si sovrappongano del tutto sullo schermo, Cartographer applica un piccolo ciclo di **repulsione elettrostatica (Forza di Coulomb)**:
-   * Formula: **F_rep = k * (r_ij / ||r_ij||^3)**
-   
-Questo permette di distanziare visivamente le sfere pur mantenendole all'interno del proprio cluster timbrico.
+La distanza acustica tra due campioni A e B nello spazio multidimensionale è calcolata tramite **Distanza Euclidea Pesata**:
+
+* Formula: d(A, B) = sqrt( Σ w_j * (z_(A,j) - z_(B,j))^2 )
+
+---
+
+### 4. Proiezione Topologica e Layout Fisico
+
+1. **UMAP**: Riduce lo spazio da 15D a 2D (X, Y) preservando sia i cluster locali sia le relazioni globali.
+2. **Forza Repulsiva Anti-Sovrapposizione**: Per evitare sovrapposizioni visive tra nodi molto simili, viene applicato un ciclo di rilassamento basato sulla legge di repulsione elettrostatica:
+
+* Formula: F_rep = k * (r_ij / ||r_ij||^3)
 
 ---
 
 ## 🛠️ Tech Stack
 
-* **Frontend Framework**: Vanilla TypeScript + HTML5 Canvas API
-* **Build Tool**: Vite 8
-* **Audio Analysis**: Meyda (DSP Feature Extraction)
-* **Dimensionality Reduction**: umap-js
-* **Design & Font**: Custom CSS (Teenage Engineering Hardware Aesthetics), Google Fonts (*Space Mono*, *Silkscreen*, *Inter*)
+| Componente | Tecnologia |
+| :--- | :--- |
+| **Language** | TypeScript |
+| **Build Tool** | Vite |
+| **DSP / Audio Analysis** | Meyda |
+| **Dimensionality Reduction** | UMAP-js |
+| **Rendering** | HTML5 Canvas API |
+| **Styling** | Custom CSS (Teenage Engineering Hardware Style) |
 
 ---
 
 ## 📦 Installazione e Avvio Locale
 
-Assicurati di avere Node.js (versione 20.19+ o superiore) installato.
+Assicurati di avere **Node.js** (v20+) installato.
 
-1. **Clona il repository**:
+1. Clona il repository:
    git clone https://github.com/flaviagaglio/cartographer.git
+
+2. Entra nella cartella:
    cd cartographer
 
-2. **Installa le dipendenze**:
+3. Installa le dipendenze:
    npm install
 
-3. **Avvia il server di sviluppo**:
+4. Avvia il server di sviluppo:
    npm run dev
 
-4. **Apri nel browser**:
-   Visita `http://localhost:5173` per esplorare la mappa sonora.
+Apri il browser all'indirizzo http://localhost:5173.
 
 ---
 
-## 🎮 Come Usare l'Applicazione
+## 🎮 Guida all'Uso
 
-1. **Esplora la Mappa**: Clicca su qualsiasi punto/nodo visibile nel Canvas per ascoltare il campione audio e leggere le sue metriche nel display LCD e nell'Inspector.
-2. **Carica i tuoi Suoni**: Trascina dei file `.wav` o `.mp3` direttamente nell'area della mappa oppure usa il tasto **"CARICA FILE WAV / MP3"**.
-3. **Ricalcola il Layout**: Dopo aver aggiunto o rimosso tracce, clicca su **"RICALCOLA MAPPA UMAP"** per riorganizzare lo spazio acustico.
-4. **Svuota o Ripristina**: Usa **"SVUOTA MAPPA"** per lavorare solo con i tuoi file oppure **"RIPRISTINA DEMO"** per ricaricare i 24 synth sintetizzati di default.
+1. **Esplorazione**: Clicca su qualsiasi nodo nel Canvas per riprodurre il suono e analizzarne le metriche nell'Inspector.
+2. **Caricamento**: Trascina file `.wav` o `.mp3` nell'interfaccia per aggiungerli alla mappa.
+3. **Ricalcolo**: Clicca su **"RICALCOLA MAPPA UMAP"** dopo aver modificato il dataset per riorganizzare i nodi.
+4. **Reset**: Usa **"RIPRISTINA DEMO"** per ricaricare i campioni di sintesi di default.
 
 ---
 
 ## 👤 Autore
 
 Made by **Flavia Gaglio**  
-🔗 Portfolio / Website: https://flaviagaglio.github.io
+🔗 Website: https://flaviagaglio.github.io
