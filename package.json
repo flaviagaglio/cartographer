@@ -1,0 +1,20 @@
+{
+  "name": "cartographer",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.2",
+    "vite": "^8.1.1"
+  },
+  "dependencies": {
+    "meyda": "^5.6.3",
+    "pixi.js": "^8.19.0",
+    "umap-js": "^1.4.0"
+  }
+}
