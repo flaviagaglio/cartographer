@@ -43,7 +43,7 @@ Il progetto adotta il design system hardware **"Cream / Field"** firmato **Teena
 
 Il motore di Cartographer trasforma un segnale audio temporale in coordinate cartesiane attraverso una pipeline a 4 fasi:
 
-Audio PCM ➔ Estrazione DSP ➔ Normalizzazione Z-Score ➔ Proiezione UMAP / Fisica
+$$\text{Audio PCM} \longrightarrow \text{Estrazione DSP} \longrightarrow \text{Normalizzazione Z-Score} \longrightarrow \text{Proiezione UMAP / Fisica}$$
 
 ### 1. Estrazione Spettrale (DSP)
 
@@ -52,18 +52,20 @@ Ogni segnale viene diviso in frame e analizzato tramite **Fast Fourier Transform
 #### A. Spectral Centroid
 Rappresenta il baricentro delle frequenze ed è legato alla brillantezza timbrica:
 
-* Formula: C = Σ ( f(k) * |X(k)| ) / Σ |X(k)|
-* Dove f(k) è la frequenza del bin k e |X(k)| è la sua magnitudo.
+$$C = \frac{\sum_{k=1}^{N} f(k) \cdot |X(k)|}{\sum_{k=1}^{N} |X(k)|}$$
+
+* $f(k)$ è la frequenza del bin $k$
+* $|X(k)|$ è la sua magnitudo
 
 #### B. RMS (Root Mean Square)
 Misura l'energia complessiva del segnale:
 
-* Formula: RMS = sqrt( (1 / N) * Σ |x(n)|^2 )
+$$\text{RMS} = \sqrt{\frac{1}{N} \sum_{n=1}^{N} |x(n)|^2}$$
 
 #### C. MFCC (Mel-Frequency Cepstral Coefficients)
 Rappresentano la forma dell'inviluppo spettrale adattato alla percezione umana (Scala Mel) tramite Discrete Cosine Transform (DCT):
 
-* Formula: c_m = Σ log(S_k) * cos( (π * m / M) * (k - 0.5) )
+$$c_m = \sum_{k=1}^{M} \log(S_k) \cdot \cos\left[ \frac{\pi m}{M} \left( k - \frac{1}{2} \right) \right]$$
 
 ---
 
@@ -71,29 +73,31 @@ Rappresentano la forma dell'inviluppo spettrale adattato alla percezione umana (
 
 Per ogni campione viene creato un vettore a 15 dimensioni:
 
-v = [Centroid, RMS, MFCC_1, ..., MFCC_13]
+$$v = [\text{Centroid}, \text{RMS}, \text{MFCC}_1, \dots, \text{MFCC}_{13}]$$
 
 Per evitare che valori elevati (es. Centroid in Hz) dominino su valori piccoli (es. RMS), si applica la normalizzazione Z-Score:
 
-* Formula: z_(i,j) = (x_(i,j) - μ_j) / σ_j
-* Dove μ_j è la media e σ_j è la deviazione standard della feature j.
+$$z_{i,j} = \frac{x_{i,j} - \mu_j}{\sigma_j}$$
+
+* $\mu_j$ è la media della feature $j$
+* $\sigma_j$ è la deviazione standard della feature $j$
 
 ---
 
 ### 3. Similarità e Distanza
 
-La distanza acustica tra due campioni A e B nello spazio multidimensionale è calcolata tramite **Distanza Euclidea Pesata**:
+La distanza acustica tra due campioni $A$ e $B$ nello spazio multidimensionale è calcolata tramite **Distanza Euclidea Pesata**:
 
-* Formula: d(A, B) = sqrt( Σ w_j * (z_(A,j) - z_(B,j))^2 )
+$$d(A, B) = \sqrt{\sum_{j=1}^{15} w_j \cdot (z_{A,j} - z_{B,j})^2}$$
 
 ---
 
 ### 4. Proiezione Topologica e Layout Fisico
 
-1. **UMAP**: Riduce lo spazio da 15D a 2D (X, Y) preservando sia i cluster locali sia le relazioni globali.
+1. **UMAP**: Riduce lo spazio da 15D a 2D ($X, Y$) preservando sia i cluster locali sia le relazioni globali.
 2. **Forza Repulsiva Anti-Sovrapposizione**: Per evitare sovrapposizioni visive tra nodi molto simili, viene applicato un ciclo di rilassamento basato sulla legge di repulsione elettrostatica:
 
-* Formula: F_rep = k * (r_ij / ||r_ij||^3)
+$$\vec{F}_{\text{rep}} = k \cdot \frac{\vec{r}_{ij}}{\|\vec{r}_{ij}\|^3}$$
 
 ---
 
